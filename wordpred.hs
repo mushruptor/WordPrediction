@@ -25,11 +25,15 @@ main = do
 
 -- | print ngram
 printNgram :: Ngram -> IO ()
-printNgram (Ngram a ns b) = putStrLn $ show a ++ unwords ns ++ show b
+printNgram (Ngram a ns b) = putStrLn $ show a ++ "  " ++ unwords ns ++ "  "  ++ show b
 
 -- | print list of ngrams
 printNgrams :: [Ngram] -> IO [()] 
 printNgrams = mapM printNgram
+
+-- | print the first k ngrams
+printkNgrams :: Int -> [Ngram] -> IO [()]
+printkNgrams k ns = mapM printNgram (take k ns)
     
 -- | generate a ngram from a string
 parseNgram :: String -> Ngram
@@ -44,9 +48,19 @@ parseNgram s = go 5 (groupBy ((==) `on` isAlpha ) s)
 -- | parse the .arpa file to a list of ngrams
 parseFile :: String -> IO [Ngram]
 parseFile file = do
-    content  <- readFile file
+    content <- readFile file
     let linesOfFile = lines content
     return $ map parseNgram $ parseLine linesOfFile
+    where
+        parseLine :: [String] -> [String]
+        parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
+
+-- | parse the .arpa file to a list of strings
+parseFile' :: String -> IO [String]
+parseFile' file = do
+    content <- readFile file
+    let linesOfFile = lines content
+    return $ parseLine linesOfFile
     where
         parseLine :: [String] -> [String]
         parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
