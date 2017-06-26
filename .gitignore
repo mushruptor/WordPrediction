@@ -1,1 +1,5 @@
 test.txt
+.cabal-sandbox/
+wordpred.hi
+wordpred.o
+wordpred
