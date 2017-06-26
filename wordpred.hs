@@ -4,7 +4,6 @@ module Main where
 
 import System.Environment (getArgs)
 import Data.List 
-import Text.Parsec
 import Control.Monad.State.Lazy hiding (mapM)
 import Data.Char
 import Data.Function
@@ -17,21 +16,31 @@ testList = [Ngram (-1.0) ["abs", "cbd"] (-0.5),
             Ngram (-2.0) ["titr", "idfr", "jaw"] (-0.2),
             Ngram (-2.1) ["titr", "idfr", "akksk"] (-0.2)]
 
+main :: IO ()
 main = do
-    --getArgs >>= dosth >> domore >>= output
     args <- getArgs
-    mapM putStrLn args
-    fromARPAFile "test.txt"
-    --handle <- readFile "ngrams.arpa"
+    tralala <- parseFile (args !! 2)
+    putStrLn "Hello"
     --writeFile "test.txt" handle
     --putStrLn "Hello, please enter your word"
     --word <- getLine
 
---parseLine = do
-  --first <- count 4 anyChar
-  --second <- count 4 anyChar
-  --return (first, second)
+parseNgram :: String -> Ngram
+parseNgram s = go (groupBy ((==) `on` isAlpha ) s)
+    where
+        go :: [String] -> Ngram
+        go x = undefined
 
+parseFile :: String -> IO [Ngram]
+parseFile file = do
+    content  <- readFile file
+    let linesOfFile = lines content
+    return $ map parseNgram $ parseLine linesOfFile
+    where
+    --    parseLine :: String -> Ngram
+        parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram"))
+
+-- | return only consecutive token as list
 parseString :: String -> [String]
 parseString = filter (not . null) . (\x -> map trim x) . (groupBy ((==) `on` isAlpha))
     where
