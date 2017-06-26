@@ -21,24 +21,31 @@ main = do
     args <- getArgs
     tralala <- parseFile (args !! 2)
     putStrLn "Hello"
-    --writeFile "test.txt" handle
-    --putStrLn "Hello, please enter your word"
-    --word <- getLine
 
+-- | print ngram
+printNgram :: Ngram -> IO ()
+printNgram (Ngram a ns b) = putStrLn $ show a ++ unwords ns ++ show b
+
+-- | print list of ngrams
+printNgrams :: [Ngram] -> IO [()] 
+printNgrams k = mapM printNgram
+    
+-- | generate a ngram from a string
 parseNgram :: String -> Ngram
 parseNgram s = go (groupBy ((==) `on` isAlpha ) s)
     where
         go :: [String] -> Ngram
         go x = undefined
 
+-- | parse the .arpa file to a list of ngrams
 parseFile :: String -> IO [Ngram]
 parseFile file = do
     content  <- readFile file
     let linesOfFile = lines content
     return $ map parseNgram $ parseLine linesOfFile
     where
-    --    parseLine :: String -> Ngram
-        parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram"))
+        parseLine :: [String] -> [String]
+        parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
 
 -- | return only consecutive token as list
 parseString :: String -> [String]
