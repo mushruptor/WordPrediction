@@ -20,6 +20,7 @@ main :: IO ()
 main = do
     args <- getArgs
     tralala <- parseFile (args !! 2)
+    printNgrams tralala
     putStrLn "Hello"
 
 -- | print ngram
@@ -28,14 +29,17 @@ printNgram (Ngram a ns b) = putStrLn $ show a ++ unwords ns ++ show b
 
 -- | print list of ngrams
 printNgrams :: [Ngram] -> IO [()] 
-printNgrams k = mapM printNgram
+printNgrams = mapM printNgram
     
 -- | generate a ngram from a string
 parseNgram :: String -> Ngram
-parseNgram s = go (groupBy ((==) `on` isAlpha ) s)
+parseNgram s = go 5 (groupBy ((==) `on` isAlpha ) s)
     where
-        go :: [String] -> Ngram
-        go x = undefined
+        -- | if n = k there is no fallback weight -> set it to 0
+        go :: Int -> [String] -> Ngram
+        go k (x:xs) 
+          | length xs <= k + 1 = Ngram (read x) xs 0.0 
+          | otherwise = Ngram (read x) (init xs) (read (last xs))
 
 -- | parse the .arpa file to a list of ngrams
 parseFile :: String -> IO [Ngram]
@@ -62,6 +66,8 @@ topK k = take k . sortOn weight
 -- | takes a list of ngrams and a list of strings of consecutive occuring words
 -- and returns all ngrams matching those words
 -- Note that the last word of each ngram is cut in order to predict the next word
+-- Call this function with the wordlist of the already right length for the ngram
+-- it will filter all of non matching length
 compareNgram :: [Ngram] -> [String] -> [Ngram]
 compareNgram ns cs = matching (filter (\n -> length (ngram n) - 1 == length cs) ns) cs 
     where
