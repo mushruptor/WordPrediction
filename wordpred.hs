@@ -6,13 +6,16 @@ import System.Environment (getArgs)
 import Data.List 
 import Text.Parsec
 import Control.Monad.State.Lazy hiding (mapM)
-import Data.Maybe
+import Data.Char
+import Data.Function
 
 data Ngram = Ngram { weight :: Float, ngram :: [String], fallback :: Float}     deriving (Show, Read)
-type Dictionary = (Int, [Ngram])
 
 testList = [Ngram (-1.0) ["abs", "cbd"] (-0.5),
-            Ngram (-1.5) ["titr", "ijr"] (-0.2)]
+            Ngram (-1.7) ["titr", "ijr"] (-0.2),
+            Ngram (-1.9) ["titr", "isd"] (-0.2),
+            Ngram (-2.0) ["titr", "idfr", "jaw"] (-0.2),
+            Ngram (-2.1) ["titr", "idfr", "akksk"] (-0.2)]
 
 main = do
     --getArgs >>= dosth >> domore >>= output
@@ -29,9 +32,20 @@ main = do
   --second <- count 4 anyChar
   --return (first, second)
 
---parseFile = endBy parseLine (char '\n')
+parseString :: String -> [String]
+parseString = filter (not . null) . (\x -> map trim x) . (groupBy ((==) `on` isAlpha))
+    where
+        trim :: String -> String
+        trim = f . f
+        f = reverse . dropWhile isSpace
 
--- | returns all Ngrams matching a list of words
+-- | return top k results sorted descending by ngram weigths
+topK :: Int -> [Ngram] -> [Ngram]
+topK k = take k . sortOn weight
+
+-- | takes a list of ngrams and a list of strings of consecutive occuring words
+-- and returns all ngrams matching those words
+-- Note that the last word of each ngram is cut in order to predict the next word
 compareNgram :: [Ngram] -> [String] -> [Ngram]
 compareNgram ns cs = matching (filter (\n -> length (ngram n) - 1 == length cs) ns) cs 
     where
@@ -47,9 +61,6 @@ compareNgram ns cs = matching (filter (\n -> length (ngram n) - 1 == length cs) 
 
         areEqualNS :: Ngram -> [String] -> Bool
         areEqualNS (Ngram _ s1 _) s2 = s1 == s2
-
-topK :: Int -> [Ngram] -> [Ngram]
-topK k = take k . sortOn weight
 
 fromARPAFile :: FilePath -> IO ()
 fromARPAFile fp = do
