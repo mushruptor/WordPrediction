@@ -37,6 +37,14 @@ printNgrams = mapM printNgram
 printkNgrams :: Int -> [Ngram] -> IO [()]
 printkNgrams k ns = mapM printNgram (take k ns)
     
+-- | return only consecutive token as list
+parseString :: String -> [String]
+parseString = filter (not . null) . (\x -> map trim x) . (groupBy ((==) `on` isAlpha))
+    where
+        trim :: String -> String
+        trim = f . f
+        f = reverse . dropWhile isSpace
+
 -- | generate a ngram from a string
 parseNgram :: String -> Ngram
 parseNgram s = go 5 (words s)
@@ -74,20 +82,16 @@ parseFile :: String -> IO [PosString]
 parseFile file = do
     content <- readFile file
     let linesOfFile = lines content
-    let result = parseLine 0 linesOfFile
+    let result = parseLine 1 linesOfFile
     return result
     where
         parseLine :: Int -> [String] -> [PosString]
         parseLine _ [] = []
-        parseLine acc (x:xs) = PosString acc 0 x : (parseLine (acc + 1) xs)
-
--- | return only consecutive token as list
-parseString :: String -> [String]
-parseString = filter (not . null) . (\x -> map trim x) . (groupBy ((==) `on` isAlpha))
-    where
-        trim :: String -> String
-        trim = f . f
-        f = reverse . dropWhile isSpace
+        parseLine acc (x:xs) = (parseLine' 1 acc (words x)) ++ (parseLine (acc + 1) xs)
+        
+        parseLine' :: Int -> Int -> [String] -> [PosString]
+        parseLine' _ _ [] = []
+        parseLine' acc l (x:xs) = PosString l acc x : (parseLine' (acc + 1) l  xs)
 
 -- | return top k results sorted descending by ngram weigths
 topK :: Int -> [Ngram] -> [Ngram]
@@ -113,9 +117,3 @@ compareNgram ns cs = matching (filter (\n -> length (ngram n) - 1 == length cs) 
 
         areEqualNS :: Ngram -> [String] -> Bool
         areEqualNS (Ngram _ s1 _) s2 = s1 == s2
-
-
-fromARPAFile :: FilePath -> IO ()
-fromARPAFile fp = do
-    words <- readFile fp
-    putStrLn "Hello"
