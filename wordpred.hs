@@ -21,9 +21,11 @@ testList = [Ngram (-1.0) ["abs", "cbd"] (-0.5),
 main :: IO ()
 main = do
     args <- getArgs
-    tralala <- parseARPAFile (args !! 2)
-    printNgrams tralala
-    putStrLn "Done"
+    tralala <- parseARPAFile (args !! 1)
+    foo <- parseFile' ((read (args !! 3)) - 1) ((read (args !! 4)) - 1) (args !! 2)  
+    printNgrams (topK (read (args !! 0)) (compareNgram tralala foo))
+    mapM putStrLn foo
+    putStrLn ""
 
 -- | print ngram
 printNgram :: Ngram -> IO ()
@@ -60,8 +62,7 @@ parseARPAFile :: String -> IO [Ngram]
 parseARPAFile file = do
     content <- readFile file
     let linesOfFile = lines content
-    let result = map parseNgram $ parseLine linesOfFile
-    return result
+    return $ map parseNgram $ parseLine linesOfFile
     where
         parseLine :: [String] -> [String]
         parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
@@ -71,8 +72,7 @@ parseARPAFile' :: String -> IO [String]
 parseARPAFile' file = do
     content <- readFile file
     let linesOfFile = lines content
-    let result = parseLine linesOfFile
-    return result 
+    return $ parseLine linesOfFile
     where
         parseLine :: [String] -> [String]
         parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
@@ -82,8 +82,7 @@ parseFile :: String -> IO [PosString]
 parseFile file = do
     content <- readFile file
     let linesOfFile = lines content
-    let result = parseLine 1 linesOfFile
-    return result
+    return $ parseLine 1 linesOfFile
     where
         parseLine :: Int -> [String] -> [PosString]
         parseLine _ [] = []
@@ -93,9 +92,24 @@ parseFile file = do
         parseLine' _ _ [] = []
         parseLine' acc l (x:xs) = PosString l acc x : (parseLine' (acc + 1) l  xs)
 
+-- | only return predecessing words (◔_◔)
+parseFile' :: Int -> Int -> String -> IO [String]
+parseFile' lin col file = do
+    content <- readFile file
+    let linesOfFile = lines content
+    return $ parseLine linesOfFile
+    where
+        parseLine :: [String] -> [String]
+        parseLine xs = parseLine' (xs !! lin)
+
+        parseLine' :: String -> [String]
+        parseLine' xs 
+          | isSpace (xs !! col) =  words (take col xs)
+          | otherwise = init $ words (take col xs)
+
 -- | return top k results sorted descending by ngram weigths
 topK :: Int -> [Ngram] -> [Ngram]
-topK k = take k . sortOn weight
+topK k = take k . reverse . sortOn weight
 
 -- | takes a list of ngrams and a list of strings of consecutive occuring words
 -- and returns all ngrams matching those words
