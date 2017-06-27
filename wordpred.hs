@@ -7,8 +7,10 @@ import Data.List
 import Control.Monad.State.Lazy hiding (mapM)
 import Data.Char
 import Data.Function
+import Data.Typeable
 
 data Ngram = Ngram { weight :: Float, ngram :: [String], fallback :: Float}     deriving (Show, Read)
+data PosString = PosString Int Int String                                       deriving (Show, Read)
 
 testList = [Ngram (-1.0) ["abs", "cbd"] (-0.5),
             Ngram (-1.7) ["titr", "ijr"] (-0.2),
@@ -19,9 +21,9 @@ testList = [Ngram (-1.0) ["abs", "cbd"] (-0.5),
 main :: IO ()
 main = do
     args <- getArgs
-    tralala <- parseFile (args !! 2)
+    tralala <- parseARPAFile (args !! 2)
     printNgrams tralala
-    putStrLn "Hello"
+    putStrLn "Done"
 
 -- | print ngram
 printNgram :: Ngram -> IO ()
@@ -46,28 +48,38 @@ parseNgram s = go 5 (words s)
           | otherwise = Ngram (read x) (init xs) (read (last xs))
 
 -- | parse the .arpa file to a list of ngrams
-parseFile :: String -> IO [Ngram]
-parseFile file = do
+parseARPAFile :: String -> IO [Ngram]
+parseARPAFile file = do
     content <- readFile file
     let linesOfFile = lines content
     let result = map parseNgram $ parseLine linesOfFile
-    printkNgrams 10 result
     return result
     where
         parseLine :: [String] -> [String]
         parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
 
 -- | parse the .arpa file to a list of strings
-parseFile' :: String -> IO [String]
-parseFile' file = do
+parseARPAFile' :: String -> IO [String]
+parseARPAFile' file = do
     content <- readFile file
     let linesOfFile = lines content
     let result = parseLine linesOfFile
-    mapM putStrLn result
     return result 
     where
         parseLine :: [String] -> [String]
         parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
+
+-- | parse the text file to a string list with the position of the word occurrence
+parseFile :: String -> IO [PosString]
+parseFile file = do
+    content <- readFile file
+    let linesOfFile = lines content
+    let result = parseLine 0 linesOfFile
+    return result
+    where
+        parseLine :: Int -> [String] -> [PosString]
+        parseLine _ [] = []
+        parseLine acc (x:xs) = PosString acc 0 x : (parseLine (acc + 1) xs)
 
 -- | return only consecutive token as list
 parseString :: String -> [String]
@@ -101,6 +113,7 @@ compareNgram ns cs = matching (filter (\n -> length (ngram n) - 1 == length cs) 
 
         areEqualNS :: Ngram -> [String] -> Bool
         areEqualNS (Ngram _ s1 _) s2 = s1 == s2
+
 
 fromARPAFile :: FilePath -> IO ()
 fromARPAFile fp = do
