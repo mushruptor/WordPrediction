@@ -37,12 +37,12 @@ printkNgrams k ns = mapM printNgram (take k ns)
     
 -- | generate a ngram from a string
 parseNgram :: String -> Ngram
-parseNgram s = go 5 (groupBy ((==) `on` isAlpha ) s)
+parseNgram s = go 5 (words s)
     where
         -- | if n = k there is no fallback weight -> set it to 0
         go :: Int -> [String] -> Ngram
         go k (x:xs) 
-          | length xs <= k + 1 = Ngram (read x) xs 0.0 
+          | length xs >= k = Ngram (read x) xs 0.0 
           | otherwise = Ngram (read x) (init xs) (read (last xs))
 
 -- | parse the .arpa file to a list of ngrams
@@ -50,7 +50,9 @@ parseFile :: String -> IO [Ngram]
 parseFile file = do
     content <- readFile file
     let linesOfFile = lines content
-    return $ map parseNgram $ parseLine linesOfFile
+    let result = map parseNgram $ parseLine linesOfFile
+    printkNgrams 10 result
+    return result
     where
         parseLine :: [String] -> [String]
         parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
@@ -60,7 +62,9 @@ parseFile' :: String -> IO [String]
 parseFile' file = do
     content <- readFile file
     let linesOfFile = lines content
-    return $ parseLine linesOfFile
+    let result = parseLine linesOfFile
+    mapM putStrLn result
+    return result 
     where
         parseLine :: [String] -> [String]
         parseLine = filter (\x -> (head(x) /= '\\') && (take 5 x /= "ngram")) . filter (not . null)
