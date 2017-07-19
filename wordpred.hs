@@ -11,15 +11,6 @@ import Text.Read (readMaybe)
 
 data Ngram = Ngram { weight :: Double, ngram :: [String], fallback :: Maybe Double}  deriving (Show)
 
-testList = [Ngram (-1.0) ["abs", "cbd"] (Just (-0.5)),
-            Ngram (-1.7) ["titr", "ijr"] (Just (-0.2)),
-            Ngram (-1.9) ["idfr", "isd"] (Just (-0.2)),
-            Ngram (-2.0) ["titr", "idfr", "jaw"] (Just (-0.2)),
-            Ngram (-1.0) ["titr", "idfr", "bla"] (Just (-0.2)),
-            Ngram (-2.2) ["titr", "idfr", "blub"] (Just (-0.2)),
-            Ngram (-2.1) ["titr", "idfr", "akksk"] (Just (-0.2)),
-            Ngram (-2.1) ["titr", "idfr", "akksk"] (Just (-0.2))]
-
 -- | Usage: ./wordpred <numberwords> <ngrammodel> <textfile> <line> <column>
 main :: IO ()
 main = do
@@ -97,10 +88,6 @@ parseFile k lin col file = parseLine (lines file)
 
         take' :: Int -> [a] -> [a]
         take' e = reverse . take e . reverse
-
--- | return top k results sorted descending by ngram weigths
-topK :: Int -> [Ngram] -> [Ngram]
-topK k = take k . reverse . sortOn weight
 
 -- | calls compareNgram' until the number of predictions is reached
 compareNgram :: Int -> [Ngram] -> [String] -> [(String, Double)]
