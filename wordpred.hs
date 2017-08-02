@@ -93,22 +93,23 @@ parseFile k lin col file = parseLine (lines file)
 compareNgram :: Int -> [Ngram] -> [String] -> [(String, Double)]
 compareNgram k ns cs
   | cs == [] = []
-  | length ngrams < k = append ngrams (compareNgram (k - length ngrams) ns (tail cs))
+  | length ngrams < k = uniqueNgrams
   | otherwise = ngrams
     where
         ngrams = top . group $ compareNgram' ns cs
+        uniqueNgrams = removeDuplicates $ append ngrams (compareNgram (k - length ngrams) ns (tail cs))
         
         group :: [Ngram] -> [(String, Double)]
-        group = group'' . map group'
+        group = removeDuplicates . map group'
             
         group' :: Ngram -> (String, Double)
         group' (Ngram a xs _) = (last xs, a)
 
-        group'' :: [(String, Double)] -> [(String, Double)]
-        group'' [] = []
-        group'' ((a,b):xs) = case index of
-                               Nothing -> (a,b) : (group'' xs)
-                               Just p -> group'' $ replaceNth p (a, b - snd (xs !! p)) xs
+        removeDuplicates :: [(String, Double)] -> [(String, Double)]
+        removeDuplicates [] = []
+        removeDuplicates ((a,b):xs) = case index of
+                               Nothing -> (a,b) : (removeDuplicates xs)
+                               Just p -> removeDuplicates $ replaceNth p (a, b - snd (xs !! p)) xs
             where
                 index = elemIndex a (map fst xs)
 
